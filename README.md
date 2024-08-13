@@ -11,7 +11,7 @@ This tool allows you to forward multiple ports to the network (not only for WSL)
 
 (An overengineering of the netsh command)
 
-You can find the source code in the repo and the exe in the releases, here:
+You can find the source code in the repo and the exe in the releases, here: https://github.com/Venn0x/EasyWinPortForward/releases/tag/release
 
 The WSL Port Forwarding function has an autofill button, it will detect your wsl ip and autofill it in the fields (make sure you have wsl turned on)
 
