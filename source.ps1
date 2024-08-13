@@ -1,3 +1,5 @@
+Import-Module NetSecurity
+
 # Ensure we're running as an administrator
 function Test-Administrator {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -207,6 +209,13 @@ $AddPortButton.Add_Click({
             # Add new rule
             iex "netsh interface portproxy add v4tov4 listenport=$port listenaddress=$addr connectport=$remoteport connectaddress=$remoteaddr"
 
+            # Add firewall rules with custom names
+            $inboundRuleName = "EasyWinPortForward Inbound - $name - $port"
+            $outboundRuleName = "EasyWinPortForward Outbound - $name - $port"
+        
+            iex "New-NetFireWallRule -DisplayName '$inboundRuleName' -Direction Inbound -LocalPort $port -Action Allow -Protocol TCP"
+            iex "New-NetFireWallRule -DisplayName '$outboundRuleName' -Direction Outbound -LocalPort $port -Action Allow -Protocol TCP"
+
             # Add the rule to the list and save it
             $IpPortList.Add([pscustomobject]@{
                 Name           = $name
@@ -225,6 +234,7 @@ $AddPortButton.Add_Click({
         }
     })
 
+
     # Event handler for Cancel button
     $CancelButton.Add_Click({
         $InputWindow.Close()
@@ -237,9 +247,17 @@ $AddPortButton.Add_Click({
 $RemovePortButton.Add_Click({
     $selectedItem = $IpPortTable.SelectedItem
     if ($selectedItem) {
-        # Execute the netsh command to remove the port proxy rule
+        # Generate the names of the firewall rules to remove
+        $inboundRuleName = "EasyWinPortForward Inbound - $($selectedItem.Name) - $($selectedItem.ListenPort)"
+        $outboundRuleName = "EasyWinPortForward Outbound - $($selectedItem.Name) - $($selectedItem.ListenPort)"
+
+        # Remove the port proxy rule
         iex "netsh interface portproxy delete v4tov4 listenport=$($selectedItem.ListenPort) listenaddress=$($selectedItem.ListenAddress)"
         
+        # Remove the corresponding firewall rules
+        iex "Remove-NetFirewallRule -DisplayName '$inboundRuleName'"
+        iex "Remove-NetFirewallRule -DisplayName '$outboundRuleName'"
+
         # Remove the item from the list and save the changes
         $IpPortList.Remove($selectedItem)
         Save-PortForwardingRules
@@ -249,6 +267,7 @@ $RemovePortButton.Add_Click({
         [System.Windows.MessageBox]::Show("Please select an item to remove.")
     }
 })
+
 
 # Show the main window
 $Window.ShowDialog() | Out-Null
